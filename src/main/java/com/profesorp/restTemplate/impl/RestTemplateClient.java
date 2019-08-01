@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.profesorp.restTemplate.CustomResponseErrorHandler;
 import com.profesorp.restTemplate.MyException;
 import com.profesorp.restTemplate.server.dto.Customer;
+import org.springframework.http.HttpStatus;
 
 @Component
 public class RestTemplateClient {
@@ -40,10 +41,12 @@ public class RestTemplateClient {
 		ObjectMapper maper=new ObjectMapper();
 		String mensaje="";
 		try {
-			if (responseEntity.getStatusCode().is2xxSuccessful())
-				mensaje=maper.writeValueAsString(responseEntity.getBody());
+                    responseEntity.getHeaders();
+                    HttpStatus httpStatus= responseEntity.getStatusCode();
+                    if (httpStatus.is2xxSuccessful())
+                            mensaje=maper.writeValueAsString(responseEntity.getBody());
 			else
-				mensaje=customError.getMsgError();
+                            mensaje=customError.getMsgError();
 
 		} catch (JsonProcessingException e) {
 			throw new MyException("I couldn't transform the response object to String!");			
