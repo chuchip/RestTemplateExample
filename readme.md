@@ -65,7 +65,7 @@ public Customer getCliente()
 
     if (responseEntity.getStatusCode()==HttpStatus.OK)
         return responseEntity.getBody();
-    throw new RuntimeException("El servidor NO devolvio OK");
+    throw new RuntimeException("The server didn't respond OK");
 }
 ```
 
@@ -89,7 +89,7 @@ En la aplicación de ejemplo si realizamos esta llamada.
 curl -s http:/localhost:8080
 ```
 
-El servidor devolverá el código HTTP  **BAD_REQUEST** . Esta sería la respuesta completa.
+El servidor devolverá el código HTTP  **BAD_REQUEST** con este texto en el cuerpo:
 
 ```
 {"timestamp":"2019-08-01T12:47:56.635+0000","status":400,"error":"Bad Request","message":"Give me a customer!","path":"/"}
@@ -101,7 +101,48 @@ Hay dos opciones:
 
 #### 1.1 Capturar la excepción del tipo HttpClientErrorException
 
+Este sería el método fácil. Para ello simplemente deberemos meter entre un **try/catch** la llamada a la función de RestTemplate.
 
+```java
+try {
+    responseEntity = new RestTemplate().getForEntity(localUrl, String.class);
+} catch (HttpClientErrorException k1) {            
+    return "Http code is not 2XX. The server responded: " + k1.getStatusCode() + 
+        " Cause: "+ k1.getResponseBodyAsString();
+} catch (RestClientException k) {
+    return "The server didn't respond: " + k.getMessage();
+}
+```
+
+Ahora si la respuesta no es del tipo 2XX la llamada lanzara una excepción tipo `HttpClientErrorException` y a través de ella podremos capturar el mensaje devuelto, así como el código HTTP devuelto, así como las correspondientes cabeceras.
+
+#### 1.1.1 Practica
+
+Así si realizamos una llamada como esta: 
+
+```java
+ curl -s http:/localhost:8080/ERROR
+```
+
+ El servidor llamado por el programa devolvera una código HTTP 400 (BAD REQUEST) y el siguiente *body* `{"name":"Customer ERROR","address":"Address Customer ERROR"}` . 
+
+Al ser un código HTTP que no esta en el rango de 200-300 (2XX) se lanzara la excepción `HttpClientErrorException`  y obtendríamos la siguiente respuesta:
+
+```bash
+Error al realizar petición HTTP. Codigo retornado: 400 BAD_REQUEST Causa: {"name":"Customer ERROR","address":"Address Customer ERROR"}
+```
+
+Si realizamos la llamada:
+
+```bash
+curl -s http:/localhost:8080/DOWN
+```
+
+Se intentara realizar una petición al puerto 1111, donde no habrá nada escuchando y por lo tanto se lanzara la excepción `RestClientException`, obteniendo esta respuesta:
+
+```bash
+Servidor no respondio: I/O error on GET request for "http://localhost:1111": Connection refused: connect; nested exception is java.net.ConnectException: Connection refused: connect
+```
 
 #### 1.2 Establecer un manejador de Errores personalizados
 
@@ -115,10 +156,7 @@ Así en el proyecto al crear la clase **RestTemplate** que se utilizara tenemos 
 @Bean
 public RestTemplate createRestTemplate() {
     RestTemplate restTemplate = new RestTemplate();				
-    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
     restTemplate.setErrorHandler(getErrorHandler());
-    interceptors.add(new LoggingRequestInterceptor(getErrorHandler()));
-    restTemplate.setInterceptors(interceptors);		
     return restTemplate;
 }
 @Bean
@@ -127,30 +165,14 @@ public CustomResponseErrorHandler getErrorHandler() {
 }
 ```
 
-La clase `CustomResponseErrorHandler` que implementa el interface `ResponseErrorHandler ` es la siguiente:
+En la clase `CustomResponseErrorHandler` que implementa el interface `ResponseErrorHandler ` es la siguiente:
 
 ```java
 public class CustomResponseErrorHandler implements ResponseErrorHandler {
-	StringBuilder body;
-	StringBuilder msgError;
-	HttpStatus estado;
+	StringBuilder body;	
 
 	@Override
 	public void handleError(ClientHttpResponse response) throws IOException {
-		if (msgError==null)
-			msgError=new StringBuilder();
-		if (body==null)
-			getBody(response);
-		msgError.append("Codigo HTTP: " + response.getStatusCode().toString() + "\n Cuerpo Mensaje:\n "+body.toString());
-		
-	}		
-	@Override
-	public boolean hasError(ClientHttpResponse response) throws IOException {
-		estado = response.getStatusCode();
-		return response.getStatusCode() != HttpStatus.OK;
-	}
-    public StringBuilder getBody(ClientHttpResponse response) throws IOException
-	{		
 		byte[] b = new byte[100];
 		int br;
 		body=new StringBuilder();
@@ -160,31 +182,16 @@ public class CustomResponseErrorHandler implements ResponseErrorHandler {
 			if (br == -1)
 				break;
 			body.append(new String(b, 0, br));
-		}
-		return body;
-	}
+		}		
+	}		
+	@Override
+	public boolean hasError(ClientHttpResponse response) throws IOException {		
+		return response.getStatusCode() != HttpStatus.OK;
+	}  
 	public String getBody() {
 		if (body==null)
 			return null;
 		return body.toString();
-	}
-	
-	public HttpStatus getEstado() {
-		return estado;
-	}
-	public void setMsgError(String mensajeError)
-	{
-		if (msgError==null)
-			msgError=new StringBuilder();
-	}
-	public String getMsgError() {
-		return msgError.toString();
-	}
-	public void reset()
-	{
-		msgError=null;
-		body=null;
-		estado=null;
 	}
 }
 ```
@@ -202,31 +209,59 @@ if (!httpStatus.is2xxSuccessful())
 
 Es importante destacar que si el servidor NO devuelve un código HTTP del tipo 2XX el cuerpo de la respuesta será siempre igual a NULL, aunque haya devuelto algo.
 
-#### 1.1 Practica
+#### 1.2.1 Practica
 
 En el proyecto de ejemplo, cuando realizamos una petición a:
 
-```java
-curl -s http:/localhost:8080/ERROR
+```bash
+curl -s http:/localhost:8080/custom/ERROR
 ```
 
-El servidor devuelve una código HTTP 400 (BAD REQUEST) y el siguiente *body* `{"name":"Customer ERROR","address":"Address Customer ERROR"}`
-
-Sin embargo si llamamos a la función **getBody(**) del objeto `ResponseEntity`  veremos como nos devuelve un NULL y deberemos llamar a la función **getBody()** de la clase `CustomResponseErrorHandler` como se puede ver en el código.
+Se ejecutara el código de la función `peticionGetPersonalizada`
 
 ```java
-ResponseEntity<String> responseEntity=restTemplate.getForEntity(localUrl, String.class);			
-HttpStatus httpStatus= responseEntity.getStatusCode();
-String mensaje="Http Status: "+httpStatus+" -> ";
-if (httpStatus.is2xxSuccessful())
-	mensaje+=responseEntity.getBody();
-else
-	mensaje+=customError.getBody();
+ public String peticionGetPersonalizada(String idCliente) {    
+     String localUrl = url;
+     if (idCliente != null) {
+         localUrl += "?nameCustomer=" + idCliente;
+     }
+     if ("DOWN".equals(idCliente)) {
+         localUrl = "http://localhost:1111";
+     }
+     ResponseEntity<String> responseEntity = null;
+     try {
+         responseEntity = restTemplate.getForEntity(localUrl, String.class);
+     } catch (RestClientException k) {
+         return "Custom RestTemplate. The server didn't respond: " + k.getMessage();
+     }
+     HttpStatus httpStatus = responseEntity.getStatusCode();
+     String mensaje = "Http Status: " + httpStatus + " -> ";
+     if (httpStatus.is2xxSuccessful()) {
+         mensaje += "Body: " + responseEntity.getBody();
+     } else {
+         mensaje += " Error message: "+ customError.getBody();
+     }
+     return mensaje;
+ }
 ```
 
-### 2. ¿Que pasa si la llamada falla porque el servidor esta caído?
+Por lo tanto se obtendrá esta salida, ya que el código HTTP es 400 y se por lo tanto se el cuerpo de la respuesta de la clase **customError**
 
-En ese caso la llamada a la función `getForEntity` lanzara una excepción del tipo `RestClientException`. En esta clase podremos conseguir información sobre el error generado.
+```bash
+Http Status: 400 BAD_REQUEST ->  Error message: {"name":"Customer ERROR","address":"Address Customer ERROR"}
+```
+
+### 2.  ¿Que pasa si la llamada falla porque el servidor esta caído?
+
+En ese caso, tengamos o no tengamos establecido un **handleError**  la llamada a la función `getForEntity` lanzara una excepción del tipo `RestClientException`. En esta clase podremos conseguir información sobre el error generado.
+
+```bash
+curl -s http:/localhost:8080/DOWN
+The server didn't respond: I/O error on GET request for "http://localhost:1111": Connection refused: connect; nested exception is java.net.ConnectException: Connection refused: connect
+
+```
+
+### 3. Y si el servidor devuelve un OK, pero lo devuelto no es un objeto del tipo `Customer`,  ¿ que pasara?.
 
 
 
