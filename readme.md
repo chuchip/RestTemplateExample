@@ -105,6 +105,8 @@ Hay dos opciones:
 
 #### 1.2 Establecer un manejador de Errores personalizados
 
+Con este método tendremos un manera para decidir nosotros que consideramos un error y realizar acciones sobre él.
+
 En la función `setErrorHandler` de la clase **RestTemplate**. Si llamamos a esa función con un objeto que implemente el interface  `ResponseErrorHandler` podremos capturar la salida de error. 
 
 Así en el proyecto al crear la clase **RestTemplate** que se utilizara tenemos este código:
