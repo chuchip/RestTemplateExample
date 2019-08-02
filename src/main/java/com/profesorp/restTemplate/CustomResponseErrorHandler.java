@@ -1,47 +1,69 @@
 package com.profesorp.restTemplate;
 
+import java.io.BufferedReader;
+
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.ResponseErrorHandler;
 
-public class CustomResponseErrorHandler implements ResponseErrorHandler {
+import lombok.extern.slf4j.Slf4j;
 
-	StringBuffer msgError = new StringBuffer();
+@Slf4j
+public class CustomResponseErrorHandler implements ResponseErrorHandler {
+	StringBuilder body;
+	StringBuilder msgError;
 	HttpStatus estado;
 
 	@Override
 	public void handleError(ClientHttpResponse response) throws IOException {
-		byte[] b = new byte[100];
-		int br;
-		msgError.append("Codigo HTTP: " + response.getStatusCode().toString() + "\n Cuerpo Mensaje: \n");
-		InputStream is = response.getBody();
-		while (true) {
-			br = is.read(b, 0, 100);
-			if (br == -1)
-				break;
-			msgError.append(new String(b, 0, br));
-		}
+		if (msgError==null)
+			msgError=new StringBuilder();
+		if (body==null)
+			getBody(response);
+		msgError.append("Codigo HTTP: " + response.getStatusCode().toString() + "\n Cuerpo Mensaje:\n "+body.toString());
+		
 	}
-
 	@Override
 	public boolean hasError(ClientHttpResponse response) throws IOException {
 		estado = response.getStatusCode();
 		return response.getStatusCode() != HttpStatus.OK;
 	}
-
+	public StringBuilder getBody(ClientHttpResponse response) throws IOException
+	{				
+		log.trace("Leido body de respuesta");
+		body=new StringBuilder();
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getBody(), "UTF-8"));
+		String line = bufferedReader.readLine();
+		while (line != null) {
+			body.append(line);
+			body.append('\n');
+			line = bufferedReader.readLine();
+		}	
+		return body;
+	}
+	public String getBody() {
+		if (body==null)
+			return null;
+		return body.toString();
+	}
 	public HttpStatus getEstado() {
 		return estado;
 	}
-
+	public void setMsgError(String mensajeError)
+	{
+		if (msgError==null)
+			msgError=new StringBuilder();
+	}
 	public String getMsgError() {
 		return msgError.toString();
 	}
 	public void reset()
 	{
-		msgError=new StringBuffer();
+		msgError=null;
+		body=null;
 		estado=null;
 	}
 }

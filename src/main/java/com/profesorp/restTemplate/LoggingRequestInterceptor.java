@@ -1,8 +1,6 @@
 package com.profesorp.restTemplate;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -13,7 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class LoggingRequestInterceptor implements ClientHttpRequestInterceptor {
-
+	CustomResponseErrorHandler customErrorHandler;
+	
+	public LoggingRequestInterceptor(CustomResponseErrorHandler errorHandler)
+	{
+		super();
+		this.customErrorHandler=errorHandler;
+	}
 	@Override
 	public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
 			throws IOException {
@@ -24,6 +28,7 @@ public class LoggingRequestInterceptor implements ClientHttpRequestInterceptor {
 	}
 
 	private void traceRequest(HttpRequest request, byte[] body) throws IOException {
+		customErrorHandler.reset();
 		log.debug("===========================request begin================================================");
 		log.debug("URI         : {}", request.getURI());
 		log.debug("Method      : {}", request.getMethod());
@@ -34,22 +39,16 @@ public class LoggingRequestInterceptor implements ClientHttpRequestInterceptor {
 
 	private void traceResponse(ClientHttpResponse response) throws IOException {
 		log.debug("============================response begin==========================================");
-		StringBuilder inputStringBuilder = new StringBuilder();
-//		try {
-//			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getBody(), "UTF-8"));
-//			String line = bufferedReader.readLine();
-//			while (line != null) {
-//				inputStringBuilder.append(line);
-//				inputStringBuilder.append('\n');
-//				line = bufferedReader.readLine();
-//			}
-//		} catch (Exception k) {
-//		}
+		StringBuilder body=null;
+		try {
+			body=customErrorHandler.getBody(response);
+		} catch (Exception k) {
+		}
 		
 		log.debug("Status code  : {}", response.getStatusCode());
 		log.debug("Status text  : {}", response.getStatusText());
 		log.debug("Headers      : {}", response.getHeaders());
-		log.debug("Response body: {}", inputStringBuilder.toString());
+		log.debug("Response body: {}", body==null?"":body.toString());
 		log.debug("=======================response end=================================================");
 	}
 }

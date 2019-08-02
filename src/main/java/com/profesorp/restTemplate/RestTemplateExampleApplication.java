@@ -24,12 +24,12 @@ public class RestTemplateExampleApplication {
 	}
 
 	@Bean
-	public RestTemplate createRestTemplate() {
+	public RestTemplate createRestTemplate(CustomResponseErrorHandler errorHandler) {
 		RestTemplate restTemplate = new RestTemplate();				
-		List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
-		interceptors.add(new LoggingRequestInterceptor());
-		restTemplate.setInterceptors(interceptors);
-		restTemplate.setErrorHandler(getErrorHandler());
+		List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();		
+		interceptors.add(new LoggingRequestInterceptor(errorHandler));
+//		restTemplate.setInterceptors(interceptors);
+//		restTemplate.setErrorHandler(errorHandler);
 		return restTemplate;
 	}
 
