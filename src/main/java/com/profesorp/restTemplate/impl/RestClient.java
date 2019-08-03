@@ -40,14 +40,18 @@ public class RestClient {
         }
         url = url + puerto;
     }
-
-    public String peticionGetPersonalizada(String idCliente) {
+    /**
+     * Envia una peticion a REST con customErrorHandler para simular la llamada a un servidor externo
+     * @param path
+     * @return
+     */
+    public String peticionGetPersonalizada(String path) {
        
         String localUrl = url;
-        if (idCliente != null) {
-            localUrl += "?nameCustomer=" + idCliente;
+        if (path != null) {
+            localUrl += "?queryParam=" + path;
         }
-        if ("DOWN".equals(idCliente)) {
+        if ("DOWN".equals(path)) {
             localUrl = "http://localhost:1111";
         }
         ResponseEntity<String> responseEntity = null;
@@ -65,20 +69,24 @@ public class RestClient {
         }
         return mensaje;
     }
-
-    public String peticionGet(String idCliente) {
+    /**
+     * Envia una peticion a REST estandard para simular la llamada a un servidor externo
+     * @param path
+     * @return
+     */
+    public String peticionGet(String path) {
         String localUrl = url;
-        if (idCliente != null) {
-            localUrl += "?nameCustomer=" + idCliente;
+        if (path != null) {
+            localUrl += "?queryParam=" + path;
         }
-        if ("DOWN".equals(idCliente)) {
+        if ("DOWN".equals(path)) {
             localUrl = "http://localhost:1111";
         }
         ResponseEntity<String> responseEntity = null;
         try {
             responseEntity = new RestTemplate().getForEntity(localUrl, String.class);
         } catch (HttpClientErrorException k1) {            
-            return "Http code is not 2XX. The server responded: " + k1.getStatusCode() + " Cause: "
+            return "Http code is not 2XX.\n The server responded: " + k1.getStatusCode() + "\n Cause:\n "
                     + k1.getResponseBodyAsString();
         } catch (RestClientException k) {
             return "The server didn't respond: " + k.getMessage();

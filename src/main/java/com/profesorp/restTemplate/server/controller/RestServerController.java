@@ -20,22 +20,23 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @Slf4j
 public class RestServerController {
-	String ERROR = "ERROR";
-	@Autowired
+		@Autowired
 	RestClient cliente;
 
 	@GetMapping
-	public ResponseEntity<Customer> getCustomer(@RequestParam(required = false) String nameCustomer) {
-		log.debug("Recibida petición en getCustomer:" + nameCustomer);
-		if (nameCustomer == null)
+	public ResponseEntity<Customer> getCustomer(@RequestParam(required = false) String queryParam) {
+		log.debug("Recibida petición en getCustomer:" + queryParam);
+		if (queryParam == null  || "NULL".equals(queryParam))
 			throw new MyException("Give me a customer!");
 
 		Customer customer = new Customer();
-		customer.setName("Customer " + nameCustomer);
-		customer.setAddress("Address Customer " + nameCustomer);
-		if (nameCustomer.equals(ERROR))
+		customer.setName("Customer " + queryParam);
+		customer.setAddress("Address Customer " + queryParam);
+		if (queryParam.equals("ERROR"))
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(customer);
-		if (nameCustomer.equals("ACCEPT"))
+		if (queryParam.equals("CREATED"))
+			return ResponseEntity.status(HttpStatus.CREATED).body(customer);
+		if (queryParam.equals("ACCEPT"))
 			throw new MyAcceptedException("Don't send me accepts!!");
 		return ResponseEntity.ok().body(customer);
 	}
@@ -49,31 +50,17 @@ public class RestServerController {
 		return ResponseEntity.ok().body(customer);
 	}
 
-	@GetMapping("/{tipoTest}")
-	public ResponseEntity<String> testGet(@PathVariable String tipoTest) {
-		log.debug("Recibida petición tipo:" + tipoTest);
-		String response = "";
-		switch (tipoTest.toUpperCase()) {
-		case "NULL":
-			response = cliente.peticionGet(null);
-			break;
-		default:
-			response = cliente.peticionGet(tipoTest);
-		}
+	@GetMapping("/{param}")
+	public ResponseEntity<String> testGet(@PathVariable String param) {
+		log.debug("Recibida petición tipo:" + param);
+		String response =  cliente.peticionGet(param);	
 		return ResponseEntity.ok().body(response);
 	}
 
-	@GetMapping("/custom/{tipoTest}")
-	public ResponseEntity<String> testGetPersonalizado(@PathVariable String tipoTest) {
-		log.debug("Recibida petición personalizada tipo:" + tipoTest);
-		String response = "";
-		switch (tipoTest.toUpperCase()) {
-		case "NULL":
-			response = cliente.peticionGetPersonalizada(null);
-			break;
-		default:
-			response = cliente.peticionGetPersonalizada(tipoTest);
-		}
+	@GetMapping("/custom/{param}")
+	public ResponseEntity<String> testGetPersonalizado(@PathVariable String param) {
+		log.debug("Recibida petición personalizada tipo:" + param);
+		String response =  cliente.peticionGetPersonalizada(param);
 		return ResponseEntity.ok().body(response);
 	}
 }

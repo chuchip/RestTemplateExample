@@ -13,22 +13,15 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CustomResponseErrorHandler implements ResponseErrorHandler {
-	StringBuilder body;
-	StringBuilder msgError;
-	HttpStatus estado;
+	StringBuilder body;	
 
 	@Override
-	public void handleError(ClientHttpResponse response) throws IOException {
-		if (msgError==null)
-			msgError=new StringBuilder();
+	public void handleError(ClientHttpResponse response) throws IOException {		
 		if (body==null)
-			getBody(response);
-		msgError.append("Codigo HTTP: " + response.getStatusCode().toString() + "\n Cuerpo Mensaje:\n "+body.toString());
-		
+			getBody(response);		
 	}
 	@Override
-	public boolean hasError(ClientHttpResponse response) throws IOException {
-		estado = response.getStatusCode();
+	public boolean hasError(ClientHttpResponse response) throws IOException {		
 		return response.getStatusCode() != HttpStatus.OK;
 	}
 	public StringBuilder getBody(ClientHttpResponse response) throws IOException
@@ -49,21 +42,9 @@ public class CustomResponseErrorHandler implements ResponseErrorHandler {
 			return null;
 		return body.toString();
 	}
-	public HttpStatus getEstado() {
-		return estado;
-	}
-	public void setMsgError(String mensajeError)
-	{
-		if (msgError==null)
-			msgError=new StringBuilder();
-	}
-	public String getMsgError() {
-		return msgError.toString();
-	}
+	
 	public void reset()
-	{
-		msgError=null;
+	{	
 		body=null;
-		estado=null;
 	}
 }
