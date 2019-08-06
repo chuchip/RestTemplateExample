@@ -3,6 +3,7 @@ package com.profesorp.restTemplate.impl;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.profesorp.restTemplate.CustomResponseErrorHandler;
+import com.profesorp.restTemplate.server.dto.Customer;
 
 /**
  * Llamada a RestTemplate sin personalizar.
@@ -22,8 +24,13 @@ import com.profesorp.restTemplate.CustomResponseErrorHandler;
 @Component
 public class RestClient {
     @Autowired
-    RestTemplate restTemplate;
+    @Qualifier("restHandleError") 
+    RestTemplate restTenmplateHandleError;
 
+    @Autowired
+    @Qualifier("restInterceptor") 
+    RestTemplate restTenmplateInterceptor;
+    
     @Autowired
     CustomResponseErrorHandler customError;
 
@@ -56,7 +63,7 @@ public class RestClient {
         }
         ResponseEntity<String> responseEntity = null;
         try {
-            responseEntity = restTemplate.getForEntity(localUrl, String.class);
+            responseEntity = restTenmplateHandleError.getForEntity(localUrl, String.class);
         } catch (RestClientException k) {
             return  "Custom RestTemplate. The server didn't respond: " + k.getMessage();
         }
@@ -82,9 +89,10 @@ public class RestClient {
         if ("DOWN".equals(path)) {
             localUrl = "http://localhost:1111";
         }
+        
         ResponseEntity<String> responseEntity = null;
         try {
-            responseEntity = new RestTemplate().getForEntity(localUrl, String.class);
+            responseEntity = restTenmplateInterceptor.getForEntity(localUrl, String.class);
         } catch (HttpClientErrorException k1) {            
             return "Http code is not 2XX.\n The server responded: " + k1.getStatusCode() + "\n Cause:\n "
                     + k1.getResponseBodyAsString();

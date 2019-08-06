@@ -73,10 +73,10 @@ Como se ve esta función devolvería el objeto `Customer` si el servidor devuelv
 
 Fácil, ¿ verdad ?. Pero, ¿ no os parece que falta algo ?. Haceros las siguientes preguntas:
 
-1. ¿Como puedo capturar el mensaje de error devuelto por el servidor si el código devuelto no es OK?
-2. ¿Que pasa si la llamada falla porque el servidor esta caído?
-3. Y si el servidor devuelve un OK, pero lo devuelto no es un objeto del tipo `Customer`,  ¿ que pasara?.
-4. ¿Como podría tener un registro de lo enviado y recibido por el servidor ?
+1. ¿Cómo puedo capturar el mensaje de error devuelto por el servidor si el código devuelto no es OK?
+2. ¿Qué pasa si la llamada falla porque el servidor esta caído?
+3. Y si el servidor devuelve un OK, pero lo devuelto no es un objeto del tipo `Customer`,  ¿ qué pasara?.
+4. ¿Cómo podría tener un registro de lo enviado y recibido por el servidor ?
 5. ¿Me devolverá el objeto tipo `Customer` en el cuerpo de la respuesta aunque no sea OK el estado de esta?
 
 Bueno, pues no todas son tan obvias como podría parecer.  Voy a intentar responder a ellas.
@@ -281,7 +281,7 @@ The server didn't respond: I/O error on GET request for "http://localhost:1111":
 ```
 
 
-### 3. Y si el servidor devuelve un OK, pero lo devuelto no es un objeto del tipo `Customer`,  ¿ que pasara?.
+### 3. Y si el servidor devuelve un OK, pero lo devuelto no es un objeto del tipo `Customer`,  ¿qué pasara?.
 
 
 
