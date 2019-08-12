@@ -20,12 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @Slf4j
 public class RestServerController {
-		@Autowired
+	@Autowired
 	RestClient cliente;
 
 	@GetMapping
 	public ResponseEntity<Customer> getCustomer(@RequestParam(required = false) String queryParam) {
-		log.debug("Recibida petición en getCustomer:" + queryParam);
+		log.debug("Received request at getCustomer:" + queryParam);
 		if (queryParam == null  || "NULL".equals(queryParam))
 			throw new MyException("Give me a customer!");
 
@@ -50,17 +50,5 @@ public class RestServerController {
 		return ResponseEntity.ok().body(customer);
 	}
 
-	@GetMapping("/{param}")
-	public ResponseEntity<String> testGet(@PathVariable String param) {
-		log.debug("Recibida petición tipo:" + param);
-		String response =  cliente.peticionGet(param);	
-		return ResponseEntity.ok().body(response);
-	}
-
-	@GetMapping("/custom/{param}")
-	public ResponseEntity<String> testGetPersonalizado(@PathVariable String param) {
-		log.debug("Recibida petición personalizada tipo:" + param);
-		String response =  cliente.peticionGetPersonalizada(param);
-		return ResponseEntity.ok().body(response);
-	}
+	
 }

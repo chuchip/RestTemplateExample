@@ -1,11 +1,17 @@
 package com.profesorp.restTemplate.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -25,11 +31,11 @@ import com.profesorp.restTemplate.server.dto.Customer;
 public class RestClient {
     @Autowired
     @Qualifier("restHandleError") 
-    RestTemplate restTenmplateHandleError;
+    RestTemplate restTemplateHandleError;
 
     @Autowired
     @Qualifier("restInterceptor") 
-    RestTemplate restTenmplateInterceptor;
+    RestTemplate restTemplateInterceptor;
     
     @Autowired
     CustomResponseErrorHandler customError;
@@ -45,7 +51,7 @@ public class RestClient {
         if (puerto == null) {
             puerto = "8080";
         }
-        url = url + puerto;
+        url = url + puerto;        
     }
     /**
      * Envia una peticion a REST con customErrorHandler para simular la llamada a un servidor externo
@@ -63,7 +69,7 @@ public class RestClient {
         }
         ResponseEntity<String> responseEntity = null;
         try {
-            responseEntity = restTenmplateHandleError.getForEntity(localUrl, String.class);
+            responseEntity = restTemplateHandleError.getForEntity(localUrl, String.class);
         } catch (RestClientException k) {
             return  "Custom RestTemplate. The server didn't respond: " + k.getMessage();
         }
@@ -84,15 +90,16 @@ public class RestClient {
     public String peticionGet(String path) {
         String localUrl = url;
         if (path != null) {
-            localUrl += "?queryParam=" + path;
+            localUrl += "?queryParam={queryParam}";
         }
         if ("DOWN".equals(path)) {
             localUrl = "http://localhost:1111";
         }
-        
+        Map<String,String> sustitute=new HashMap<>();
+        sustitute.put("queryParam",path);
         ResponseEntity<String> responseEntity = null;
         try {
-            responseEntity = restTenmplateInterceptor.getForEntity(localUrl, String.class);
+            responseEntity = restTemplateInterceptor.getForEntity(localUrl, String.class,sustitute);
         } catch (HttpClientErrorException k1) {            
             return "Http code is not 2XX.\n The server responded: " + k1.getStatusCode() + "\n Cause:\n "
                     + k1.getResponseBodyAsString();
@@ -103,5 +110,24 @@ public class RestClient {
         String mensaje = "Http Status: " + httpStatus + " -> " + responseEntity.getBody();
         return mensaje;
     }
-
+    public String peticionPost(Customer customer)
+    {
+    	   String localUrl = url;
+    	   HttpHeaders headers = new HttpHeaders();
+    	   headers.setContentType(MediaType.APPLICATION_JSON);
+    	   headers.set("my-id", "profe-test");
+           HttpEntity<Customer> httpEntity = new HttpEntity<>(customer,headers);
+           ResponseEntity<String> responseEntity = null;
+           try {
+               responseEntity = restTemplateInterceptor.postForEntity( localUrl, httpEntity,String.class);
+           } catch (HttpClientErrorException k1) {            
+               return "Http code is not 2XX.\n The server responded: " + k1.getStatusCode() + "\n Cause:\n "
+                       + k1.getResponseBodyAsString();
+           } catch (RestClientException k) {
+               return "The server didn't respond: " + k.getMessage();
+           }
+           HttpStatus httpStatus = responseEntity.getStatusCode();
+           String mensaje = "Http Status: " + httpStatus + " -> " + responseEntity.getBody();
+           return mensaje;
+    }
 }
