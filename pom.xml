@@ -5076,7 +5076,7 @@
       <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-web</artifactId>
-        <version>5.2.0.BUILD-SNAPSHOT</version>
+        <version>5.2.10.BUILD-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.session</groupId>
