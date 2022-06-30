@@ -2838,7 +2838,7 @@
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-amqp</artifactId>
-        <version>2.2.0.BUILD-SNAPSHOT</version>
+        <version>2.3.11-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.amqp</groupId>
